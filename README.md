@@ -8,11 +8,10 @@ SharpBit converts images, GIFs and short videos into monochrome 1-bit C assets.
     <th>After</th>
   </tr>
   <tr>
-    <td><img src="examples/preview/test.gif" alt="Before conversion" width="400"></td>
-    <td><img src="examples/source/test.gif" alt="After conversion" width="400"></td>
+    <td><img src="examples/source/test.gif" alt="Before conversion" width="400"></td>
+    <td><img src="examples/preview/test.gif" alt="After conversion" width="400"></td>
   </tr>
 </table>
-
 
 ## Install
 
