@@ -1,54 +1,61 @@
 # SharpBit
 
-SharpBit converts PNG, JPG, BMP and WebP images into monochrome 1-bit C assets.
+SharpBit converts images, GIFs and short videos into monochrome 1-bit C assets.
 
-It can work in two simple ways:
+You can:
+- drag and drop files or folders onto `drop-assets-here.bat`
+- use `input/` + `convert-assets.bat`
+- launch a simple GUI with `launch-gui.bat`
 
-1. put images into `input/` and run `convert-assets.bat`
-2. drag and drop image files or folders onto `drop-assets-here.bat`
+## Install
 
-SharpBit also generates preview PNG files decoded from the exact output bytes.
+On Windows, run:
 
-## Setup
+```text
+install.bat
+```
+
+Or install manually:
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-## Use
+## Quick use
 
-### Option 1: input folder
+### Drag and drop
+Drop one or more files or folders onto:
 
-1. Put images into `input/`
+```text
+drop-assets-here.bat
+```
+
+### GUI
+Run:
+
+```powershell
+.\launch-gui.bat
+```
+
+The launcher checks Python and installs missing packages automatically. If startup fails, the console stays open and shows the error.
+
+### Classic folder mode
+1. Put files into `input/`
 2. Run:
 
 ```powershell
 .\convert-assets.bat
 ```
 
-### Option 2: drag and drop
-
-Drag one or more image files or folders onto:
-
-```text
-drop-assets-here.bat
-```
-
 ## Output
 
 Generated files:
-
-```text
-output/generated/assets.c
-output/generated/assets.h
-output/preview/
-```
+- `output/generated/assets.c`
+- `output/generated/assets.h`
+- `output/generated/animations/...`
+- `output/preview/...`
 
 ## Config
 
-Conversion settings are stored in `config.json`.
-
-Default output:
-- MSB first
-- black pixel = `1`
-- white pixel = `0`
+Edit `config.json` to change default dithering, threshold and target display size.
+The GUI can also override these settings.

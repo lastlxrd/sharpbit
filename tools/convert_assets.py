@@ -7,7 +7,7 @@ from pathlib import Path
 
 from sharpbit_core import convert_all
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 ROOT = Path(__file__).resolve().parents[1]
 
 
