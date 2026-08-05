@@ -1,0 +1,23 @@
+{
+  "defaults": {
+    "dither": "bayer4",
+    "threshold": 128,
+    "invert_image": false,
+    "background": 255,
+    "max_width": 400,
+    "max_height": 240,
+    "bit_order": "msb",
+    "black_bit": 1
+  },
+  "overrides": {
+    "boot_logo.png": {
+      "dither": "threshold"
+    },
+    "backgrounds/menu.jpg": {
+      "width": 400,
+      "height": 240,
+      "fit": "cover",
+      "dither": "bayer4"
+    }
+  }
+}
