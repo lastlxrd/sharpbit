@@ -3,19 +3,33 @@ setlocal
 cd /d "%~dp0"
 
 if "%~1"=="" (
-    echo Drag and drop one or more files or folders onto this file.
-    echo.
-    echo Supported:
-    echo   PNG, JPG, JPEG, BMP, WebP, GIF
-    echo   MP4, MOV, AVI, MKV, WEBM
-    echo.
-    echo Results:
-    echo   output\generated
-    echo   output\preview
+    echo Drag images, GIFs, videos, or folders onto this file.
     pause
     exit /b 1
 )
 
+set /p "ASSET_NAME=Asset name: "
+if "%ASSET_NAME%"=="" (
+    echo ERROR: Asset name is required.
+    pause
+    exit /b 1
+)
+
+where py >nul 2>nul
+if not errorlevel 1 (
+    set "PYTHON=py -3"
+    goto python_found
+)
+where python >nul 2>nul
+if not errorlevel 1 (
+    set "PYTHON=python"
+    goto python_found
+)
+echo ERROR: Python was not found.
+pause
+exit /b 1
+
+:python_found
 set "ARGS="
 :collect
 if "%~1"=="" goto run
@@ -24,7 +38,7 @@ shift
 goto collect
 
 :run
-python tools\convert_assets.py %ARGS%
+%PYTHON% tools\convert_assets.py --name "%ASSET_NAME%" %ARGS%
 if errorlevel 1 (
     echo.
     echo SharpBit conversion failed.
@@ -34,7 +48,4 @@ if errorlevel 1 (
 
 echo.
 echo SharpBit conversion complete.
-echo Results:
-echo   output\generated
-echo   output\preview
 pause

@@ -2,60 +2,63 @@
 
 SharpBit converts images, GIFs and short videos into monochrome 1-bit C assets.
 
-You can:
-- drag and drop files or folders onto `drop-assets-here.bat`
-- use `input/` + `convert-assets.bat`
-- launch a simple GUI with `launch-gui.bat`
-
 ## Install
 
-On Windows, run:
+Run:
 
 ```text
 install.bat
 ```
 
-Or install manually:
+## GUI
 
-```bash
-python -m pip install -r requirements.txt
-```
-
-## Quick use
-
-### Drag and drop
-Drop one or more files or folders onto:
-
-```text
-drop-assets-here.bat
-```
-
-### GUI
 Run:
 
-```powershell
-.\launch-gui.bat
+```text
+launch-gui.bat
 ```
 
-The launcher checks Python and installs missing packages automatically. If startup fails, the console stays open and shows the error.
+The GUI has two tabs:
 
-### Classic folder mode
-1. Put files into `input/`
-2. Run:
+- **Convert Assets** — image/GIF/video to separate `.c` and `.h` asset files
+- **Frames → Video** — image frames back to MP4 or GIF
 
-```powershell
-.\convert-assets.bat
-```
+An asset name is required before conversion.
 
 ## Output
 
-Generated files:
-- `output/generated/assets.c`
-- `output/generated/assets.h`
-- `output/generated/animations/...`
-- `output/preview/...`
+Each asset is stored separately:
 
-## Config
+```text
+output/generated/<asset_name>/<asset_name>.c
+output/generated/<asset_name>/<asset_name>.h
+output/preview/<asset_name>...
+```
 
-Edit `config.json` to change default dithering, threshold and target display size.
-The GUI can also override these settings.
+Common types and the optional registry are stored in:
+
+```text
+output/generated/sharpbit_types.h
+output/generated/sharpbit_assets.c
+output/generated/sharpbit_assets.h
+```
+
+Rebuilt videos are stored in:
+
+```text
+output/rebuilt_videos/
+```
+
+## CLI example
+
+```powershell
+python tools\convert_assets.py image.png --name boot_logo --dither bayer4
+```
+
+Frames back to video:
+
+```powershell
+python tools\frames_to_video.py frames --name demo --fps 12 --format mp4
+```
+
+Default display size and conversion settings are in `config.json`.

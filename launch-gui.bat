@@ -3,8 +3,8 @@ setlocal
 cd /d "%~dp0"
 
 echo SharpBit GUI launcher
-
 echo Checking Python...
+
 where py >nul 2>nul
 if not errorlevel 1 (
     set "PYTHON=py -3"
@@ -26,7 +26,7 @@ exit /b 1
 
 :python_found
 echo Checking dependencies...
-%PYTHON% -c "import tkinter; import PIL; import imageio" >nul 2>nul
+%PYTHON% -c "import tkinter; import PIL; import numpy; import imageio; import tkinterdnd2" >nul 2>nul
 if errorlevel 1 (
     echo Required packages are missing. Installing them now...
     %PYTHON% -m pip install -r requirements.txt
@@ -37,7 +37,7 @@ if errorlevel 1 (
 if errorlevel 1 (
     echo.
     echo ERROR: This Python installation has no Tkinter support.
-    echo Install the official Python build from python.org and try again.
+    echo Install the official Python build from python.org.
     echo.
     pause
     exit /b 1

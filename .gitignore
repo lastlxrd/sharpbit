@@ -22,3 +22,6 @@ output/generated/*
 
 output/preview/*
 !output/preview/.gitkeep
+
+output/rebuilt_videos/*
+!output/rebuilt_videos/.gitkeep
