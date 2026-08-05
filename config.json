@@ -6,16 +6,21 @@
     "background": 255,
     "max_width": 400,
     "max_height": 240,
+    "fit": "contain",
     "bit_order": "msb",
     "black_bit": 1
+  },
+  "animation_defaults": {
+    "video_fps": 10,
+    "max_frames": 120
   },
   "overrides": {
     "boot_logo.png": {
       "dither": "threshold"
     },
     "backgrounds/menu.jpg": {
-      "width": 400,
-      "height": 240,
+      "max_width": 400,
+      "max_height": 240,
       "fit": "cover",
       "dither": "bayer4"
     }

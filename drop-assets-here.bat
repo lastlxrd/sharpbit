@@ -3,9 +3,13 @@ setlocal
 cd /d "%~dp0"
 
 if "%~1"=="" (
-    echo Drag and drop one or more image files or folders onto this file.
+    echo Drag and drop one or more files or folders onto this file.
     echo.
-    echo Output will be written to:
+    echo Supported:
+    echo   PNG, JPG, JPEG, BMP, WebP, GIF
+    echo   MP4, MOV, AVI, MKV, WEBM
+    echo.
+    echo Results:
     echo   output\generated
     echo   output\preview
     pause

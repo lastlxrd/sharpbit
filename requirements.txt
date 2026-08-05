@@ -1,1 +1,4 @@
 Pillow>=10.0,<13
+imageio>=2.34
+imageio-ffmpeg>=0.5.1
+tkinterdnd2>=0.4.2
