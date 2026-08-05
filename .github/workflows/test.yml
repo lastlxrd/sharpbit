@@ -17,4 +17,4 @@ jobs:
 
       - run: python -m pip install -r requirements.txt
       - run: python -m unittest discover -s tests -v
-      - run: python tools/convert_assets.py --input examples/source --output /tmp/sharpbit-output
+      - run: python tools/convert_assets.py examples/source --output /tmp/sharpbit-output

@@ -20,7 +20,7 @@ except ImportError:
     raise SystemExit(2)
 
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 ROOT = Path(__file__).resolve().parents[1]
 
 SUPPORTED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
@@ -54,10 +54,19 @@ def parse_args() -> argparse.Namespace:
         description="Convert images into monochrome 1-bit C assets."
     )
     parser.add_argument(
+        "sources",
+        nargs="*",
+        type=Path,
+        help=(
+            "Optional image files or folders. "
+            "If omitted, the default input/ folder is used."
+        ),
+    )
+    parser.add_argument(
         "--input",
         type=Path,
         default=ROOT / "input",
-        help="Source image directory.",
+        help="Default source image directory when no positional sources are provided.",
     )
     parser.add_argument(
         "--output",
@@ -118,15 +127,6 @@ def settings_for(relative_path: str, config: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def discover_images(directory: Path) -> list[Path]:
-    directory.mkdir(parents=True, exist_ok=True)
-    return sorted(
-        path
-        for path in directory.rglob("*")
-        if path.is_file() and path.suffix.lower() in SUPPORTED_EXTENSIONS
-    )
-
-
 def sanitize_symbol(logical_name: str) -> str:
     symbol = re.sub(r"[^A-Za-z0-9_]", "_", logical_name)
     symbol = re.sub(r"_+", "_", symbol).strip("_").lower()
@@ -137,6 +137,44 @@ def sanitize_symbol(logical_name: str) -> str:
         symbol = f"asset_{symbol}"
 
     return symbol
+
+
+def is_supported_image(path: Path) -> bool:
+    return path.is_file() and path.suffix.lower() in SUPPORTED_EXTENSIONS
+
+
+def discover_images_from_source_items(
+    source_items: list[Path],
+    fallback_input_dir: Path,
+) -> list[tuple[Path, str, str]]:
+    """
+    Returns tuples:
+      (absolute_image_path, relative_path_with_extension, logical_name_without_extension)
+    """
+    items = [item.resolve() for item in source_items] if source_items else [fallback_input_dir.resolve()]
+    discovered: list[tuple[Path, str, str]] = []
+
+    for item in items:
+        if not item.exists():
+            raise RuntimeError(f"Source path does not exist: '{item}'")
+
+        if item.is_dir():
+            for path in sorted(item.rglob("*")):
+                if is_supported_image(path):
+                    relative_with_ext = path.relative_to(item).as_posix()
+                    logical_name = Path(relative_with_ext).with_suffix("").as_posix()
+                    discovered.append((path, relative_with_ext, logical_name))
+        elif is_supported_image(item):
+            relative_with_ext = item.name
+            logical_name = item.stem
+            discovered.append((item, relative_with_ext, logical_name))
+        else:
+            raise RuntimeError(
+                f"Unsupported source path '{item}'. "
+                "Use PNG, JPG, JPEG, BMP or WebP files, or folders containing them."
+            )
+
+    return discovered
 
 
 def flatten_on_background(path: Path, background: int) -> Image.Image:
@@ -236,9 +274,7 @@ def ordered_dither(
         matrix_row = matrix[y % size]
 
         for x in range(width):
-            threshold = (
-                (matrix_row[x % size] + 0.5) * 255.0
-            ) / denominator
+            threshold = ((matrix_row[x % size] + 0.5) * 255.0) / denominator
             destination[x, y] = 255 if source[x, y] >= threshold else 0
 
     return output
@@ -251,10 +287,7 @@ def to_monochrome(
     dither = str(settings.get("dither", "bayer4")).lower()
 
     if dither == "threshold":
-        threshold = max(
-            0,
-            min(255, int(settings.get("threshold", 128))),
-        )
+        threshold = max(0, min(255, int(settings.get("threshold", 128))))
         mono = image.point(
             lambda pixel: 255 if pixel >= threshold else 0,
             mode="1",
@@ -272,10 +305,7 @@ def to_monochrome(
         )
 
     if bool(settings.get("invert_image", False)):
-        mono = mono.point(
-            lambda pixel: 0 if pixel else 255,
-            mode="1",
-        )
+        mono = mono.point(lambda pixel: 0 if pixel else 255, mode="1")
 
     return mono
 
@@ -478,12 +508,13 @@ def clean_preview_dir(preview_dir: Path) -> None:
 
 
 def convert_all(
-    input_dir: Path,
+    source_items: list[Path],
+    fallback_input_dir: Path,
     output_dir: Path,
     config_path: Path,
 ) -> list[dict[str, Any]]:
     config = load_config(config_path)
-    images = discover_images(input_dir)
+    discovered = discover_images_from_source_items(source_items, fallback_input_dir)
 
     generated_dir = output_dir / "generated"
     preview_dir = output_dir / "preview"
@@ -495,19 +526,24 @@ def convert_all(
 
     assets: list[dict[str, Any]] = []
     used_symbols: set[str] = set()
+    used_names: set[str] = set()
 
-    for image_path in images:
-        relative_path = image_path.relative_to(input_dir).as_posix()
-        logical_name = Path(relative_path).with_suffix("").as_posix()
+    for image_path, relative_with_ext, logical_name in discovered:
+        if logical_name in used_names:
+            raise RuntimeError(
+                f"Asset name collision: '{logical_name}'. "
+                "Rename one of the dropped files or folders."
+            )
+        used_names.add(logical_name)
+
         symbol = sanitize_symbol(logical_name)
-
         if symbol in used_symbols:
             raise RuntimeError(
-                f"Symbol collision: '{relative_path}' becomes '{symbol}'."
+                f"Asset symbol collision: '{logical_name}' becomes '{symbol}'."
             )
         used_symbols.add(symbol)
 
-        settings = settings_for(relative_path, config)
+        settings = settings_for(relative_with_ext, config)
         bit_order, black_bit = validate_packing(settings)
 
         grayscale = flatten_on_background(
@@ -518,7 +554,6 @@ def convert_all(
         mono = to_monochrome(resized, settings)
         data, stride = pack_image(mono, bit_order, black_bit)
 
-        # Decode the preview from the exact bytes written to C.
         preview = unpack_image(
             data,
             mono.width,
@@ -527,9 +562,7 @@ def convert_all(
             bit_order,
             black_bit,
         )
-        preview_path = (
-            preview_dir / Path(relative_path).with_suffix(".png")
-        )
+        preview_path = preview_dir / Path(logical_name).with_suffix(".png")
         preview_path.parent.mkdir(parents=True, exist_ok=True)
         preview.save(preview_path)
 
@@ -545,7 +578,7 @@ def convert_all(
         )
 
         print(
-            f"[OK] {relative_path} -> {logical_name} "
+            f"[OK] {relative_with_ext} -> {logical_name} "
             f"({mono.width}x{mono.height}, {len(data)} bytes, "
             f"{bit_order}, black={black_bit})"
         )
@@ -565,7 +598,8 @@ def convert_all(
 def main() -> int:
     args = parse_args()
     convert_all(
-        input_dir=args.input.resolve(),
+        source_items=[path.resolve() for path in args.sources],
+        fallback_input_dir=args.input.resolve(),
         output_dir=args.output.resolve(),
         config_path=args.config.resolve(),
     )

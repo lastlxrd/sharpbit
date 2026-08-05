@@ -59,9 +59,10 @@ class SharpBitTests(unittest.TestCase):
             )
 
             assets = converter.convert_all(
-                input_dir,
-                output_dir,
-                config_path,
+                source_items=[],
+                fallback_input_dir=input_dir,
+                output_dir=output_dir,
+                config_path=config_path,
             )
 
             self.assertEqual(assets, [])
@@ -92,9 +93,10 @@ class SharpBitTests(unittest.TestCase):
             )
 
             assets = converter.convert_all(
-                input_dir,
-                output_dir,
-                config_path,
+                source_items=[],
+                fallback_input_dir=input_dir,
+                output_dir=output_dir,
+                config_path=config_path,
             )
 
             self.assertEqual(len(assets), 1)
@@ -108,6 +110,35 @@ class SharpBitTests(unittest.TestCase):
             self.assertTrue(
                 (output_dir / "preview" / "icons" / "test.png").exists()
             )
+
+    def test_drag_drop_sources_support_files_and_folders(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            output_dir = root / "output"
+            config_path = root / "config.json"
+            config_path.write_text(
+                '{"defaults": {"dither": "threshold"}, "overrides": {}}',
+                encoding="utf-8",
+            )
+
+            loose_file = root / "logo.png"
+            Image.new("L", (10, 10), 255).save(loose_file)
+
+            folder = root / "folder"
+            (folder / "nested").mkdir(parents=True)
+            Image.new("L", (8, 8), 0).save(folder / "nested" / "icon.png")
+
+            assets = converter.convert_all(
+                source_items=[loose_file, folder],
+                fallback_input_dir=root / "unused",
+                output_dir=output_dir,
+                config_path=config_path,
+            )
+
+            names = sorted(asset["name"] for asset in assets)
+            self.assertEqual(names, ["logo", "nested/icon"])
+            self.assertTrue((output_dir / "preview" / "logo.png").exists())
+            self.assertTrue((output_dir / "preview" / "nested" / "icon.png").exists())
 
 
 if __name__ == "__main__":
