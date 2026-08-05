@@ -1,3 +1,0 @@
-Put source images here.
-Supported formats: PNG, JPG, JPEG, BMP, WebP.
-Subfolders are supported.
