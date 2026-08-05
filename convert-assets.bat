@@ -1,11 +1,13 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+
 python tools\convert_assets.py
 if errorlevel 1 (
     echo.
-    echo Conversion failed.
+    echo SharpBit conversion failed.
     exit /b 1
 )
+
 echo.
-echo Conversion complete.
+echo SharpBit conversion complete.
